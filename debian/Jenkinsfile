@@ -5,7 +5,7 @@
 String[] distributions = [
 //			'debian:bookworm',
 			'debian:trixie',
-//			'debian:forky',
+			'debian:forky',
 //			'ubuntu:jammy',
 //			'ubuntu:noble',
 //			'ubuntu:resolute',
@@ -14,11 +14,18 @@ String[] distributions = [
 String vendor = 'vitexsoftware'
 
 properties([
-    copyArtifactPermission('*')
+    copyArtifactPermission('*'),
+    buildBlocker(
+        useBuildBlocker: true,
+        blockLevel: 'GLOBAL',
+        scanQueueFor: 'ALL',
+        blockingJobs: 'RebulidDEBRepoByAnsible'
+    )
 ])
 node() {
     ansiColor('xterm') {
         stage('SCM Checkout') {
+            sh 'sudo chown -R jenkins:jenkins . 2>/dev/null || true'
             checkout scm
         }
     }
@@ -37,6 +44,7 @@ distributions.each { distro ->
         node {
             ansiColor('xterm') {
                 stage('Checkout ' + distroName) {
+                    sh 'sudo chown -R jenkins:jenkins . 2>/dev/null || true'
                     checkout scm
                     buildImage = docker.image(vendor + '/' + distro)
                     sh 'git checkout debian/changelog'
